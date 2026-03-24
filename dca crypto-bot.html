@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DCA Crypto Bot — Binance + Telegram</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+<style>
+ :root {
+ --bg: #080c10;
+ --bg2: #0d1319;
+ --bg3: #111820;
+ --border: #1e2d3d;
+ --accent: #00e5ff;
+ --accent2: #00ff9d;
+ --accent3: #ff6b35;
+ --warn: #ffd166;
+ --red: #ff3d5a;
+ --text: #c8d8e8;
+ --text2: #5a7a94;
+ --mono: 'Share Tech Mono', monospace;
+ --sans: 'Syne', sans-serif;
+ }
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ body {
+ background: var(--bg);
+ color: var(--text);
+ font-family: var(--mono);
+ min-height: 100vh;
+ overflow-x: hidden;
+ }
+
+/* grid noise overlay */
+body::before {
+content: ‘’;
+position: fixed; inset: 0;
+background-image:
+linear-gradient(rgba(0,229,255,0.025) 1px, transparent 1px),
+linear-gradient(90deg, rgba(0,229,255,0.025) 1px, transparent 1px);
+background-size: 40px 40px;
+pointer-events: none;
+z-index: 0;
+}
+
+/* scanline */
+body::after {
+content: ‘’;
+position: fixed; inset: 0;
+background: repeating-linear-gradient(
+0deg,
+transparent,
+transparent 2px,
+rgba(0,0,0,0.07) 2px,
+rgba(0,0,0,0.07) 4px
+);
+pointer-events: none;
+z-index: 0;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1540px; margin: 0 auto; padding: 0 20px 40px; }
+
+/* HEADER */
+header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 18px 0 14px;
+border-bottom: 1px solid var(–border);
+margin-bottom: 24px;
+flex-wrap: wrap;
+gap: 12px;
+}
+.logo {
+display: flex; align-items: center; gap: 14px;
+}
+.logo-icon {
+width: 42px; height: 42px;
+background: linear-gradient(135deg, var(–accent), var(–accent2));
+border-radius: 8px;
+display: flex; align-items: center; justify-content: center;
+font-size: 20px;
+box-shadow: 0 0 20px rgba(0,229,255,0.3);
+animation: pulse-glow 3s ease-in-out infinite;
+}
+@keyframes pulse-glow {
+0%,100% { box-shadow: 0 0 20px rgba(0,229,255,0.3); }
+50% { box-shadow: 0 0 36px rgba(0,229,255,0.6); }
+}
+.logo-text h1 {
+font-family: var(–sans);
+font-weight: 800;
+font-size: 20px;
+letter-spacing: -0.5px;
+color: #fff;
+}
+.logo-text span {
+font-size: 11px;
+color: var(–text2);
+letter-spacing: 2px;
+text-transform: uppercase;
+}
+
+.header-right {
+display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.status-pill {
+display: flex; align-items: center; gap: 7px;
+background: rgba(0,255,157,0.08);
+border: 1px solid rgba(0,255,157,0.25);
+border-radius: 20px;
+padding: 5px 13px;
+font-size: 12px;
+color: var(–accent2);
+}
+.status-dot {
+width: 7px; height: 7px;
+border-radius: 50%;
+background: var(–accent2);
+animation: blink 1.5s step-end infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+.status-pill.offline { color: var(–red); background: rgba(255,61,90,0.08); border-color: rgba(255,61,90,0.25); }
+.status-pill.offline .status-dot { background: var(–red); }
+
+.clock { font-size: 13px; color: var(–text2); }
+
+/* CONFIG SECTION */
+.config-bar {
+background: var(–bg2);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 18px 22px;
+margin-bottom: 22px;
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+gap: 14px;
+animation: fadeUp 0.4s ease both;
+}
+@keyframes fadeUp {
+from { opacity:0; transform: translateY(16px); }
+to { opacity:1; transform: translateY(0); }
+}
+.config-group label {
+display: block;
+font-size: 10px;
+color: var(–text2);
+letter-spacing: 1.5px;
+text-transform: uppercase;
+margin-bottom: 6px;
+}
+.config-group input, .config-group select {
+width: 100%;
+background: var(–bg3);
+border: 1px solid var(–border);
+border-radius: 6px;
+color: var(–text);
+font-family: var(–mono);
+font-size: 13px;
+padding: 8px 10px;
+outline: none;
+transition: border-color 0.2s;
+}
+.config-group input:focus, .config-group select:focus {
+border-color: var(–accent);
+}
+.config-group input[type=“password”] { letter-spacing: 3px; }
+
+.btn {
+padding: 9px 20px;
+border-radius: 6px;
+border: none;
+font-family: var(–mono);
+font-size: 13px;
+cursor: pointer;
+transition: all 0.2s;
+letter-spacing: 0.5px;
+align-self: flex-end;
+}
+.btn-primary {
+background: var(–accent);
+color: #000;
+font-weight: 700;
+}
+.btn-primary:hover { background: #00ccee; box-shadow: 0 0 16px rgba(0,229,255,0.4); }
+.btn-danger {
+background: transparent;
+color: var(–red);
+border: 1px solid var(–red);
+}
+.btn-danger:hover { background: rgba(255,61,90,0.1); }
+.btn-warn {
+background: transparent;
+color: var(–warn);
+border: 1px solid var(–warn);
+}
+.btn-warn:hover { background: rgba(255,209,102,0.1); }
+.btn-sm { padding: 5px 12px; font-size: 11px; }
+
+/* DCA SETTINGS */
+.dca-settings {
+background: var(–bg2);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 18px 22px;
+margin-bottom: 22px;
+animation: fadeUp 0.5s ease both;
+}
+.section-title {
+font-family: var(–sans);
+font-size: 13px;
+font-weight: 600;
+letter-spacing: 2px;
+text-transform: uppercase;
+color: var(–accent);
+margin-bottom: 14px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+.section-title::after {
+content: ‘’;
+flex: 1;
+height: 1px;
+background: var(–border);
+}
+.dca-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+gap: 14px;
+}
+
+/* MAIN GRID */
+.main-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+grid-template-rows: auto auto;
+gap: 18px;
+animation: fadeUp 0.6s ease both;
+}
+@media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+.panel {
+background: var(–bg2);
+border: 1px solid var(–border);
+border-radius: 10px;
+overflow: hidden;
+}
+.panel-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 14px 18px;
+border-bottom: 1px solid var(–border);
+background: rgba(0,229,255,0.03);
+}
+.panel-title {
+font-family: var(–sans);
+font-size: 12px;
+font-weight: 600;
+letter-spacing: 2px;
+text-transform: uppercase;
+color: var(–accent);
+}
+.panel-body { padding: 16px 18px; }
+
+/* PRICE FEED */
+.price-grid {
+display: grid;
+grid-template-columns: 1fr 1fr 1fr;
+gap: 10px;
+}
+.price-card {
+background: var(–bg3);
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 12px;
+transition: border-color 0.3s;
+position: relative;
+overflow: hidden;
+}
+.price-card.up { border-color: rgba(0,255,157,0.3); }
+.price-card.down { border-color: rgba(255,61,90,0.3); }
+.price-card::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 2px;
+background: var(–border);
+transition: background 0.3s;
+}
+.price-card.up::before { background: var(–accent2); }
+.price-card.down::before { background: var(–red); }
+.pc-symbol { font-size: 11px; color: var(–text2); margin-bottom: 4px; }
+.pc-price {
+font-size: 16px;
+font-weight: 700;
+color: #fff;
+letter-spacing: -0.5px;
+}
+.pc-change {
+font-size: 11px;
+margin-top: 3px;
+}
+.pc-change.up { color: var(–accent2); }
+.pc-change.down { color: var(–red); }
+
+/* POSITIONS */
+.pos-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.pos-table th {
+color: var(–text2);
+font-size: 10px;
+letter-spacing: 1px;
+text-transform: uppercase;
+padding: 0 0 10px 0;
+text-align: left;
+border-bottom: 1px solid var(–border);
+}
+.pos-table td {
+padding: 10px 0;
+border-bottom: 1px solid rgba(30,45,61,0.5);
+vertical-align: middle;
+}
+.pos-table tr:last-child td { border-bottom: none; }
+.badge {
+display: inline-block;
+padding: 2px 7px;
+border-radius: 4px;
+font-size: 10px;
+}
+.badge-buy { background: rgba(0,255,157,0.12); color: var(–accent2); }
+.badge-dca { background: rgba(0,229,255,0.12); color: var(–accent); }
+.pnl-pos { color: var(–accent2); }
+.pnl-neg { color: var(–red); }
+
+/* TRADE HISTORY */
+.history-list { max-height: 260px; overflow-y: auto; }
+.history-list::-webkit-scrollbar { width: 4px; }
+.history-list::-webkit-scrollbar-track { background: transparent; }
+.history-list::-webkit-scrollbar-thumb { background: var(–border); border-radius: 2px; }
+.history-item {
+display: grid;
+grid-template-columns: 70px 90px 1fr 80px 70px;
+gap: 8px;
+align-items: center;
+padding: 8px 0;
+border-bottom: 1px solid rgba(30,45,61,0.5);
+font-size: 11px;
+animation: slideIn 0.3s ease both;
+}
+@keyframes slideIn {
+from { opacity:0; transform: translateX(-8px); }
+to { opacity:1; transform: translateX(0); }
+}
+.history-item:last-child { border-bottom: none; }
+.hi-time { color: var(–text2); }
+.hi-sym { font-weight: 700; color: #fff; }
+.hi-type { }
+.hi-price { color: var(–text); text-align: right; }
+.hi-pnl { text-align: right; }
+
+/* TELEGRAM LOG */
+.tg-log { max-height: 260px; overflow-y: auto; }
+.tg-log::-webkit-scrollbar { width: 4px; }
+.tg-log::-webkit-scrollbar-thumb { background: var(–border); border-radius: 2px; }
+.tg-item {
+display: flex;
+gap: 10px;
+padding: 8px 0;
+border-bottom: 1px solid rgba(30,45,61,0.5);
+font-size: 11px;
+animation: slideIn 0.3s ease both;
+}
+.tg-item:last-child { border-bottom: none; }
+.tg-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.tg-body {}
+.tg-meta { color: var(–text2); font-size: 10px; margin-bottom: 2px; }
+.tg-msg { color: var(–text); line-height: 1.4; }
+.tg-status { font-size: 10px; margin-top: 3px; }
+.tg-status.sent { color: var(–accent2); }
+.tg-status.pending { color: var(–warn); }
+.tg-status.sim { color: var(–text2); }
+
+/* STATS ROW */
+.stats-row {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+gap: 14px;
+margin-bottom: 22px;
+animation: fadeUp 0.45s ease both;
+}
+.stat-card {
+background: var(–bg2);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 16px 18px;
+}
+.stat-label { font-size: 10px; color: var(–text2); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+.stat-val {
+font-family: var(–sans);
+font-size: 22px;
+font-weight: 800;
+color: #fff;
+}
+.stat-val.pos { color: var(–accent2); }
+.stat-val.neg { color: var(–red); }
+.stat-sub { font-size: 11px; color: var(–text2); margin-top: 3px; }
+
+/* MODAL */
+.modal-overlay {
+position: fixed; inset: 0;
+background: rgba(0,0,0,0.75);
+display: flex; align-items: center; justify-content: center;
+z-index: 100;
+display: none;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+background: var(–bg2);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 28px;
+width: 440px;
+max-width: 95vw;
+}
+.modal h2 { font-family: var(–sans); font-size: 16px; font-weight: 700; margin-bottom: 18px; }
+.modal-grid { display: grid; gap: 12px; margin-bottom: 20px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* NOTICE */
+.notice {
+background: rgba(255,209,102,0.07);
+border: 1px solid rgba(255,209,102,0.2);
+border-radius: 8px;
+padding: 10px 14px;
+font-size: 11px;
+color: var(–warn);
+margin-bottom: 18px;
+line-height: 1.6;
+}
+
+/* empty state */
+.empty { text-align: center; padding: 30px; color: var(–text2); font-size: 12px; }
+.empty .e-icon { font-size: 28px; margin-bottom: 8px; }
+
+.btn-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+ <!-- HEADER -->
+
+ <header>
+ <div class="logo">
+ <div class="logo-icon">₿</div>
+ <div class="logo-text">
+ <h1>DCA CryptoBot</h1>
+ <span>Binance · Dollar Cost Averaging Engine</span>
+ </div>
+ </div>
+ <div class="header-right">
+ <div class="status-pill offline" id="binanceStatus">
+ <div class="status-dot"></div>
+ <span>Binance: Disconnected</span>
+ </div>
+ <div class="status-pill offline" id="telegramStatus">
+ <div class="status-dot"></div>
+ <span>Telegram: Not set</span>
+ </div>
+ <div class="clock" id="clock">--:--:--</div>
+ </div>
+ </header>
+
+ <!-- NOTICE -->
+
+ <div class="notice">
+ <strong>SIMULATION MODE</strong> — This dashboard runs fully in your browser. No real trades are placed. Connect your Binance API keys (read-only safe) and Telegram bot token to enable live price feeds and real alerts. All DCA logic and P&amp;L calculations are simulated locally.
+ </div>
+
+ <!-- CONFIG BAR -->
+
+ <div class="config-bar">
+ <div class="config-group">
+ <label>Binance API Key</label>
+ <input type="password" id="apiKey" placeholder="Your Binance API Key"/>
+ </div>
+ <div class="config-group">
+ <label>Binance Secret</label>
+ <input type="password" id="apiSecret" placeholder="Your Binance Secret"/>
+ </div>
+ <div class="config-group">
+ <label>Telegram Bot Token</label>
+ <input type="password" id="tgToken" placeholder="123456:ABCDef..."/>
+ </div>
+ <div class="config-group">
+ <label>Telegram Chat ID</label>
+ <input type="text" id="tgChatId" placeholder="-100123456789"/>
+ </div>
+ <div class="config-group" style="display:flex;gap:8px;align-items:flex-end;">
+ <button class="btn btn-primary" onclick="connectAll()">CONNECT</button>
+ <button class="btn btn-warn" onclick="testTelegram()">TEST TG</button>
+ </div>
+ </div>
+
+ <!-- DCA SETTINGS -->
+
+ <div class="dca-settings">
+ <div class="section-title">DCA Strategy Settings</div>
+ <div class="dca-grid">
+ <div class="config-group">
+ <label>Pair</label>
+ <select id="dcaPair">
+ <option value="BTCUSDT">BTC/USDT</option>
+ <option value="ETHUSDT">ETH/USDT</option>
+ <option value="SOLUSDT">SOL/USDT</option>
+ <option value="BNBUSDT">BNB/USDT</option>
+ <option value="XRPUSDT">XRP/USDT</option>
+ <option value="ADAUSDT">ADA/USDT</option>
+ </select>
+ </div>
+ <div class="config-group">
+ <label>DCA Amount (USDT)</label>
+ <input type="number" id="dcaAmount" value="50" min="1"/>
+ </div>
+ <div class="config-group">
+ <label>Interval</label>
+ <select id="dcaInterval">
+ <option value="60">Every 1 min (sim)</option>
+ <option value="3600">Every 1 Hour</option>
+ <option value="86400">Every 1 Day</option>
+ <option value="604800">Every 1 Week</option>
+ <option value="2592000">Every 1 Month</option>
+ </select>
+ </div>
+ <div class="config-group">
+ <label>Max Safety Orders</label>
+ <input type="number" id="safetyOrders" value="3" min="0" max="10"/>
+ </div>
+ <div class="config-group">
+ <label>Safety Order Drop %</label>
+ <input type="number" id="dropPct" value="3" min="0.5" max="20" step="0.5"/>
+ </div>
+ <div class="config-group">
+ <label>Take Profit %</label>
+ <input type="number" id="tpPct" value="5" min="0.1" max="50" step="0.1"/>
+ </div>
+ <div class="config-group" style="display:flex;gap:8px;align-items:flex-end;">
+ <button class="btn btn-primary" onclick="startBot()" id="startBtn"> START BOT</button>
+ <button class="btn btn-danger" onclick="stopBot()" id="stopBtn" style="display:none">■ STOP</button>
+ </div>
+ </div>
+ </div>
+
+ <!-- STATS ROW -->
+
+ <div class="stats-row">
+ <div class="stat-card">
+ <div class="stat-label">Total Invested</div>
+ <div class="stat-val" id="statInvested">$0.00</div>
+ <div class="stat-sub">USDT deployed</div>
+ </div>
+ <div class="stat-card">
+ <div class="stat-label">Portfolio Value</div>
+ <div class="stat-val" id="statValue">$0.00</div>
+ <div class="stat-sub">current market val</div>
+ </div>
+ <div class="stat-card">
+ <div class="stat-label">Total P&amp;L</div>
+ <div class="stat-val" id="statPnl">$0.00</div>
+ <div class="stat-sub" id="statPnlPct">0.00%</div>
+ </div>
+ <div class="stat-card">
+ <div class="stat-label">DCA Orders</div>
+ <div class="stat-val" id="statOrders">0</div>
+ <div class="stat-sub">executed this session</div>
+ </div>
+ <div class="stat-card">
+ <div class="stat-label">Avg Entry Price</div>
+ <div class="stat-val" id="statAvgEntry">—</div>
+ <div class="stat-sub">weighted average</div>
+ </div>
+ <div class="stat-card">
+ <div class="stat-label">Take Profit Target</div>
+ <div class="stat-val" id="statTP">—</div>
+ <div class="stat-sub" id="statTPpair">waiting for entry</div>
+ </div>
+ </div>
+
+ <!-- MAIN PANELS -->
+
+ <div class="main-grid">
+
+```
+<!-- LIVE PRICES -->
+<div class="panel">
+ <div class="panel-header">
+ <span class="panel-title"> Live Price Feed</span>
+ <span style="font-size:11px;color:var(--text2)" id="feedSrc">Binance WebSocket</span>
+ </div>
+ <div class="panel-body">
+ <div class="price-grid" id="priceGrid">
+ <!-- populated by JS -->
+ </div>
+ </div>
+</div>
+
+<!-- OPEN POSITIONS -->
+<div class="panel">
+ <div class="panel-header">
+ <span class="panel-title"> Open Positions</span>
+ <div class="btn-group">
+ <button class="btn btn-sm btn-warn" onclick="showAddPosition()">+ Manual Entry</button>
+ </div>
+ </div>
+ <div class="panel-body">
+ <table class="pos-table" id="posTable">
+ <thead>
+ <tr>
+ <th>Pair</th>
+ <th>Type</th>
+ <th>Qty</th>
+ <th>Avg Entry</th>
+ <th>Cur Price</th>
+ <th>P&amp;L</th>
+ </tr>
+ </thead>
+ <tbody id="posBody">
+ <tr><td colspan="6"><div class="empty"><div class="e-icon"> </div>No open positions</div></td></tr>
+ </tbody>
+ </table>
+ </div>
+</div>
+
+<!-- TRADE HISTORY -->
+<div class="panel">
+ <div class="panel-header">
+ <span class="panel-title"> Trade History &amp; P&amp;L</span>
+ <button class="btn btn-sm btn-danger" onclick="clearHistory()">Clear</button>
+ </div>
+ <div class="panel-body">
+ <div class="history-list" id="historyList">
+ <div class="empty"><div class="e-icon"> </div>No trades yet — start the bot to simulate DCA orders</div>
+ </div>
+ </div>
+</div>
+
+<!-- TELEGRAM LOG -->
+<div class="panel">
+ <div class="panel-header">
+ <span class="panel-title"> Telegram Alert Log</span>
+ <span style="font-size:11px;color:var(--text2)" id="tgCount">0 sent</span>
+ </div>
+ <div class="panel-body">
+ <div class="tg-log" id="tgLog">
+ <div class="empty"><div class="e-icon"> </div>No alerts yet — configure your Telegram bot above</div>
+ </div>
+ </div>
+</div>
+```
+
+ </div><!-- /main-grid -->
+</div><!-- /wrap -->
+
+<!-- ADD POSITION MODAL -->
+
+<div class="modal-overlay" id="addPosModal">
+ <div class="modal">
+ <h2> Add Manual Position</h2>
+ <div class="modal-grid">
+ <div class="config-group">
+ <label>Pair</label>
+ <select id="mp_pair">
+ <option>BTCUSDT</option><option>ETHUSDT</option>
+ <option>SOLUSDT</option><option>BNBUSDT</option>
+ <option>XRPUSDT</option><option>ADAUSDT</option>
+ </select>
+ </div>
+ <div class="config-group">
+ <label>Entry Price (USDT)</label>
+ <input type="number" id="mp_entry" placeholder="e.g. 65000"/>
+ </div>
+ <div class="config-group">
+ <label>Quantity (coin amount)</label>
+ <input type="number" id="mp_qty" placeholder="e.g. 0.001" step="any"/>
+ </div>
+ </div>
+ <div class="modal-actions">
+ <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+ <button class="btn btn-primary" onclick="addManualPosition()">Add Position</button>
+ </div>
+ </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+const PAIRS = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','ADAUSDT'];
+const DISPLAY = { BTCUSDT:'BTC/USDT', ETHUSDT:'ETH/USDT', SOLUSDT:'SOL/USDT', BNBUSDT:'BNB/USDT', XRPUSDT:'XRP/USDT', ADAUSDT:'ADA/USDT' };
+
+let prices = { BTCUSDT:0, ETHUSDT:0, SOLUSDT:0, BNBUSDT:0, XRPUSDT:0, ADAUSDT:0 };
+let prevPrices = {...prices};
+let seedPrices = { BTCUSDT:87500, ETHUSDT:3200, SOLUSDT:160, BNBUSDT:590, XRPUSDT:0.52, ADAUSDT:0.48 };
+let ws = null;
+
+let botRunning = false;
+let botInterval = null;
+let dcaTimer = null;
+
+let positions = []; // { id, pair, entries: [{price, qty, time}], type }
+let trades = []; // history
+let tgAlerts = [];
+let tgSentCount = 0;
+
+let totalInvested = 0;
+let totalOrders = 0;
+
+// ─────────────────────────────────────────────
+// CLOCK
+// ─────────────────────────────────────────────
+function updateClock() {
+ const now = new Date();
+ document.getElementById('clock').textContent = now.toUTCString().slice(17, 25) + ' UTC';
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ─────────────────────────────────────────────
+// PRICE FEED (Binance WebSocket or simulation)
+// ─────────────────────────────────────────────
+function initPriceCards() {
+ const grid = document.getElementById('priceGrid');
+ grid.innerHTML = PAIRS.map(p => `
+ <div class="price-card" id="pc_${p}">
+ <div class="pc-symbol">${DISPLAY[p]}</div>
+ <div class="pc-price" id="pcp_${p}">—</div>
+ <div class="pc-change" id="pcc_${p}">—</div>
+ </div>
+ `).join('');
+}
+initPriceCards();
+
+function updatePriceCard(pair, price) {
+ const card = document.getElementById('pc_'+pair);
+ const priceEl = document.getElementById('pcp_'+pair);
+ const changeEl = document.getElementById('pcc_'+pair);
+ if (!card) return;
+ const prev = prevPrices[pair] || price;
+ const chg = prev > 0 ? ((price - prev) / prev * 100) : 0;
+ const dir = price >= prev ? 'up' : 'down';
+ card.className = 'price-card ' + dir;
+ priceEl.textContent = price < 1 ? '$'+price.toFixed(4) : '$'+price.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+ changeEl.className = 'pc-change ' + dir;
+ changeEl.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(3) + '%';
+}
+
+// Simulated price engine (random walk from seed)
+function simTick() {
+ PAIRS.forEach(p => {
+ prevPrices[p] = prices[p] || seedPrices[p];
+ const vol = seedPrices[p] * 0.0008;
+ prices[p] = Math.max(0.0001, (prevPrices[p] || seedPrices[p]) + (Math.random()-0.499)*vol);
+ updatePriceCard(p, prices[p]);
+ });
+ updatePositionPnL();
+ updateStats();
+}
+
+let simIntervalId = setInterval(simTick, 2000);
+// initial seed
+PAIRS.forEach(p => { prices[p] = seedPrices[p]; prevPrices[p] = seedPrices[p]; updatePriceCard(p, prices[p]); });
+
+// Try Binance WebSocket
+function connectBinanceWS() {
+ const streams = PAIRS.map(p => p.toLowerCase()+'@ticker').join('/');
+ try {
+ ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
+ ws.onopen = () => {
+ setBinanceStatus(true);
+ document.getElementById('feedSrc').textContent = ' Binance Live';
+ clearInterval(simIntervalId);
+ };
+ ws.onmessage = (e) => {
+ const d = JSON.parse(e.data);
+ if (!d.data) return;
+ const pair = d.data.s;
+ const price = parseFloat(d.data.c);
+ if (!prices[pair] && prices[pair] !== 0) return;
+ prevPrices[pair] = prices[pair];
+ prices[pair] = price;
+ updatePriceCard(pair, price);
+ updatePositionPnL();
+ updateStats();
+ };
+ ws.onerror = () => { setBinanceStatus(false); startSimFeed(); };
+ ws.onclose = () => { setBinanceStatus(false); startSimFeed(); };
+ } catch(e) { setBinanceStatus(false); startSimFeed(); }
+}
+
+function startSimFeed() {
+ if (!simIntervalId) simIntervalId = setInterval(simTick, 2000);
+ document.getElementById('feedSrc').textContent = ' Simulated Feed';
+}
+
+function setBinanceStatus(on) {
+ const el = document.getElementById('binanceStatus');
+ el.className = 'status-pill' + (on ? '' : ' offline');
+ el.innerHTML = `<div class="status-dot"></div><span>Binance: ${on?'Connected':'Disconnected'}</span>`;
+}
+function setTelegramStatus(on) {
+ const el = document.getElementById('telegramStatus');
+ el.className = 'status-pill' + (on ? '' : ' offline');
+ el.innerHTML = `<div class="status-dot"></div><span>Telegram: ${on?'Active':'Not set'}</span>`;
+}
+
+// ─────────────────────────────────────────────
+// CONNECT
+// ─────────────────────────────────────────────
+function connectAll() {
+ const key = document.getElementById('apiKey').value.trim();
+ const token = document.getElementById('tgToken').value.trim();
+ const chat = document.getElementById('tgChatId').value.trim();
+
+ // Try Binance WebSocket (public, no auth needed for price feed)
+ connectBinanceWS();
+
+ if (token && chat) {
+ setTelegramStatus(true);
+ addTgLog(' ', 'System', 'Telegram configured — bot active', true);
+ }
+}
+
+// ─────────────────────────────────────────────
+// TELEGRAM
+// ─────────────────────────────────────────────
+async function sendTelegram(msg) {
+ const token = document.getElementById('tgToken').value.trim();
+ const chatId = document.getElementById('tgChatId').value.trim();
+ if (!token || !chatId) {
+ addTgLog(' ', 'Alert', msg, false);
+ return;
+ }
+ try {
+ const url = `https://api.telegram.org/bot${token}/sendMessage`;
+ const res = await fetch(url, {
+ method: 'POST',
+ headers: {'Content-Type':'application/json'},
+ body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'HTML' })
+ });
+ const data = await res.json();
+ if (data.ok) {
+ tgSentCount++;
+ document.getElementById('tgCount').textContent = tgSentCount + ' sent';
+ addTgLog(' ', 'Sent', msg, true);
+ } else {
+ addTgLog(' ', 'Failed', msg + '\n→ ' + (data.description||'error'), false, 'pending');
+ }
+ } catch(e) {
+ addTgLog(' ', 'Error', msg, false, 'pending');
+ }
+}
+
+function addTgLog(icon, type, msg, sent, status) {
+ const log = document.getElementById('tgLog');
+ if (log.querySelector('.empty')) log.innerHTML = '';
+ const time = new Date().toTimeString().slice(0,8);
+ const statusText = sent ? '✓ sent' : (status === 'pending' ? ' failed' : '○ simulated');
+ const statusClass = sent ? 'sent' : (status === 'pending' ? 'pending' : 'sim');
+ const item = document.createElement('div');
+ item.className = 'tg-item';
+ item.innerHTML = `
+ <div class="tg-icon">${icon}</div>
+ <div class="tg-body">
+ <div class="tg-meta">[${time}] ${type}</div>
+ <div class="tg-msg">${msg.replace(/</g,'&lt;').replace(/>/g,'&gt;').substring(0,120)}</div>
+ <div class="tg-status ${statusClass}">${statusText}</div>
+ </div>`;
+ log.prepend(item);
+}
+
+async function testTelegram() {
+ const msg = ` <b>DCA CryptoBot Test</b>\n Telegram connection verified!\n ${new Date().toUTCString()}`;
+ await sendTelegram(msg);
+}
+
+// ─────────────────────────────────────────────
+// BOT LOGIC — DCA
+// ─────────────────────────────────────────────
+function startBot() {
+ if (botRunning) return;
+ botRunning = true;
+ document.getElementById('startBtn').style.display = 'none';
+ document.getElementById('stopBtn').style.display = '';
+
+ const pair = document.getElementById('dcaPair').value;
+ const amount = parseFloat(document.getElementById('dcaAmount').value) || 50;
+ const interval = parseInt(document.getElementById('dcaInterval').value) * 1000;
+
+ // Fire first order immediately
+ executeDCA(pair, amount);
+
+ // Schedule subsequent orders
+ dcaTimer = setInterval(() => {
+ if (!botRunning) return;
+ executeDCA(pair, amount);
+ checkSafetyOrders(pair, amount);
+ checkTakeProfit(pair);
+ }, Math.min(interval, 30000)); // cap at 30s for simulation
+}
+
+function stopBot() {
+ botRunning = false;
+ clearInterval(dcaTimer);
+ document.getElementById('startBtn').style.display = '';
+ document.getElementById('stopBtn').style.display = 'none';
+ const msg = ` <b>DCA Bot Stopped</b>\nTotal Orders: ${totalOrders}\nTotal Invested: $${totalInvested.toFixed(2)}\n ${new Date().toUTCString()}`;
+ sendTelegram(msg);
+}
+
+function executeDCA(pair, amount) {
+ const price = prices[pair];
+ if (!price || price <= 0) return;
+ const qty = amount / price;
+
+ totalInvested += amount;
+ totalOrders++;
+
+ // Find or create position
+ let pos = positions.find(p => p.pair === pair);
+ if (!pos) {
+ pos = { id: Date.now(), pair, entries: [], type: 'DCA' };
+ positions.push(pos);
+ }
+ pos.entries.push({ price, qty, time: new Date() });
+
+ addTrade(pair, 'DCA BUY', price, qty, amount, null);
+ updatePositionsTable();
+ updateStats();
+
+ const msg = ` <b>DCA Order Executed</b>
+Pair: ${DISPLAY[pair]}
+Price: $${price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4})}
+Amount: $${amount.toFixed(2)} USDT
+Qty: ${qty.toFixed(6)} ${pair.replace('USDT','')}
+Avg Entry: $${getAvgEntry(pos).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4})}
+ ${new Date().toUTCString()}`;
+ sendTelegram(msg);
+}
+
+function checkSafetyOrders(pair, baseAmount) {
+ const pos = positions.find(p => p.pair === pair);
+ if (!pos || pos.entries.length === 0) return;
+
+ const maxSafety = parseInt(document.getElementById('safetyOrders').value) || 3;
+ const dropPct = parseFloat(document.getElementById('dropPct').value) || 3;
+ const safetyCount = pos.entries.filter(e => e.safety).length;
+ if (safetyCount >= maxSafety) return;
+
+ const avgEntry = getAvgEntry(pos);
+ const curPrice = prices[pair];
+ const dropFromAvg = (avgEntry - curPrice) / avgEntry * 100;
+
+ if (dropFromAvg >= dropPct) {
+ const safetyAmount = baseAmount * 1.5;
+ const qty = safetyAmount / curPrice;
+ totalInvested += safetyAmount;
+ totalOrders++;
+ pos.entries.push({ price: curPrice, qty, time: new Date(), safety: true });
+ addTrade(pair, 'SAFETY', curPrice, qty, safetyAmount, null);
+ updatePositionsTable();
+
+ const msg = ` <b>Safety Order Triggered</b>
+Pair: ${DISPLAY[pair]}
+Drop from avg: ${dropFromAvg.toFixed(2)}%
+Safety #${safetyCount+1}/${maxSafety}
+New Avg Entry: $${getAvgEntry(pos).toLocaleString('en-US',{minimumFractionDigits:2})}`;
+ sendTelegram(msg);
+ }
+}
+
+function checkTakeProfit(pair) {
+ const pos = positions.find(p => p.pair === pair);
+ if (!pos || pos.entries.length === 0) return;
+ const tpPct = parseFloat(document.getElementById('tpPct').value) || 5;
+ const avgEntry = getAvgEntry(pos);
+ const curPrice = prices[pair];
+ const gainPct = (curPrice - avgEntry) / avgEntry * 100;
+
+ if (gainPct >= tpPct) {
+ const totalQty = pos.entries.reduce((a,e) => a+e.qty, 0);
+ const proceeds = totalQty * curPrice;
+ const cost = pos.entries.reduce((a,e) => a+(e.qty*e.price), 0);
+ const pnl = proceeds - cost;
+
+ addTrade(pair, 'SELL TP', curPrice, totalQty, proceeds, pnl);
+ positions = positions.filter(p => p.pair !== pair);
+ updatePositionsTable();
+
+ const msg = ` <b>Take Profit Hit! </b>
+Pair: ${DISPLAY[pair]}
+Sell Price: $${curPrice.toLocaleString('en-US',{minimumFractionDigits:2})}
+Avg Entry: $${avgEntry.toLocaleString('en-US',{minimumFractionDigits:2})}
+Profit: +$${pnl.toFixed(2)} (+${gainPct.toFixed(2)}%)
+ ${new Date().toUTCString()}`;
+ sendTelegram(msg);
+ }
+}
+
+function getAvgEntry(pos) {
+ if (!pos || pos.entries.length === 0) return 0;
+ const totalCost = pos.entries.reduce((a,e) => a+(e.price*e.qty), 0);
+ const totalQty = pos.entries.reduce((a,e) => a+e.qty, 0);
+ return totalQty > 0 ? totalCost / totalQty : 0;
+}
+
+// ─────────────────────────────────────────────
+// POSITIONS TABLE
+// ─────────────────────────────────────────────
+function updatePositionsTable() {
+ const tbody = document.getElementById('posBody');
+ if (positions.length === 0) {
+ tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="e-icon"> </div>No open positions</div></td></tr>';
+ return;
+ }
+ tbody.innerHTML = positions.map(pos => {
+ const avgEntry = getAvgEntry(pos);
+ const curPrice = prices[pos.pair] || avgEntry;
+ const totalQty = pos.entries.reduce((a,e) => a+e.qty, 0);
+ const pnl = (curPrice - avgEntry) * totalQty;
+ const pnlPct = avgEntry > 0 ? (curPrice - avgEntry) / avgEntry * 100 : 0;
+ const pnlClass = pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
+ const sym = pos.pair.replace('USDT','');
+ const typeClass = pos.entries.some(e=>e.safety) ? 'badge-dca' : 'badge-buy';
+ return `<tr>
+ <td><strong>${DISPLAY[pos.pair]}</strong></td>
+ <td><span class="badge ${typeClass}">${pos.type}${pos.entries.some(e=>e.safety)?'+SO':''}</span></td>
+ <td>${totalQty < 0.01 ? totalQty.toFixed(6) : totalQty.toFixed(4)} ${sym}</td>
+ <td>$${avgEntry.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4})}</td>
+ <td>$${curPrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4})}</td>
+ <td class="${pnlClass}">${pnl>=0?'+':''}$${pnl.toFixed(2)}<br><small>${pnlPct>=0?'+':''}${pnlPct.toFixed(2)}%</small></td>
+ </tr>`;
+ }).join('');
+}
+
+function updatePositionPnL() {
+ updatePositionsTable();
+}
+
+// ─────────────────────────────────────────────
+// TRADE HISTORY
+// ─────────────────────────────────────────────
+function addTrade(pair, type, price, qty, value, pnl) {
+ const trade = { pair, type, price, qty, value, pnl, time: new Date() };
+ trades.unshift(trade);
+
+ const list = document.getElementById('historyList');
+ if (list.querySelector('.empty')) list.innerHTML = '';
+
+ const pnlHtml = pnl !== null
+ ? `<span class="${pnl>=0?'pnl-pos':'pnl-neg'}">${pnl>=0?'+':''}$${pnl.toFixed(2)}</span>`
+ : '<span style="color:var(--text2)">—</span>';
+ const typeClass = type.includes('SELL') ? 'pnl-pos' : (type.includes('SAFETY') ? '' : 'badge-buy');
+ const sym = pair.replace('USDT','');
+ const timeStr = trade.time.toTimeString().slice(0,8);
+
+ const item = document.createElement('div');
+ item.className = 'history-item';
+ item.innerHTML = `
+ <span class="hi-time">${timeStr}</span>
+ <span class="hi-sym">${DISPLAY[pair]}</span>
+ <span class="hi-type"><span class="badge ${typeClass}" style="font-size:10px">${type}</span></span>
+ <span class="hi-price">$${price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4})}</span>
+ <span class="hi-pnl">${pnlHtml}</span>
+ `;
+ list.prepend(item);
+}
+
+function clearHistory() {
+ trades = [];
+ document.getElementById('historyList').innerHTML = '<div class="empty"><div class="e-icon"> </div>History cleared</div>';
+}
+
+// ─────────────────────────────────────────────
+// STATS
+// ─────────────────────────────────────────────
+function updateStats() {
+ // Portfolio value
+ let portVal = 0;
+ positions.forEach(pos => {
+ const qty = pos.entries.reduce((a,e) => a+e.qty, 0);
+ portVal += qty * (prices[pos.pair] || 0);
+ });
+
+ const pnl = portVal - totalInvested;
+ const pnlPct = totalInvested > 0 ? pnl / totalInvested * 100 : 0;
+
+ document.getElementById('statInvested').textContent = '$'+totalInvested.toFixed(2);
+ document.getElementById('statValue').textContent = '$'+portVal.toFixed(2);
+ const pnlEl = document.getElementById('statPnl');
+ pnlEl.textContent = (pnl>=0?'+':'') + '$'+pnl.toFixed(2);
+ pnlEl.className = 'stat-val ' + (pnl>=0?'pos':'neg');
+ document.getElementById('statPnlPct').textContent = (pnlPct>=0?'+':'')+pnlPct.toFixed(2)+'%';
+ document.getElementById('statOrders').textContent = totalOrders;
+
+ // Avg entry for selected pair
+ const pair = document.getElementById('dcaPair').value;
+ const pos = positions.find(p => p.pair === pair);
+ if (pos) {
+ const avg = getAvgEntry(pos);
+ const tp = avg * (1 + parseFloat(document.getElementById('tpPct').value||5)/100);
+ document.getElementById('statAvgEntry').textContent = '$'+avg.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4});
+ document.getElementById('statTP').textContent = '$'+tp.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4});
+ document.getElementById('statTPpair').textContent = DISPLAY[pair];
+ document.getElementById('statAvgEntry').className = 'stat-val';
+ } else {
+ document.getElementById('statAvgEntry').textContent = '—';
+ document.getElementById('statTP').textContent = '—';
+ document.getElementById('statTPpair').textContent = 'waiting for entry';
+ }
+}
+
+// ─────────────────────────────────────────────
+// MANUAL POSITION MODAL
+// ─────────────────────────────────────────────
+function showAddPosition() {
+ document.getElementById('addPosModal').classList.add('open');
+}
+function closeModal() {
+ document.getElementById('addPosModal').classList.remove('open');
+}
+function addManualPosition() {
+ const pair = document.getElementById('mp_pair').value;
+ const entry = parseFloat(document.getElementById('mp_entry').value);
+ const qty = parseFloat(document.getElementById('mp_qty').value);
+ if (!entry || !qty) return;
+
+ let pos = positions.find(p => p.pair === pair);
+ if (!pos) {
+ pos = { id: Date.now(), pair, entries: [], type: 'MANUAL' };
+ positions.push(pos);
+ }
+ pos.entries.push({ price: entry, qty, time: new Date() });
+ totalInvested += entry * qty;
+ closeModal();
+ updatePositionsTable();
+ updateStats();
+}
+
+// Close modal on overlay click
+document.getElementById('addPosModal').addEventListener('click', function(e) {
+ if (e.target === this) closeModal();
+});
+
+// Try to connect Binance on load
+setTimeout(connectBinanceWS, 1000);
+</script>
+
+</body>
+</html>
